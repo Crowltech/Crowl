@@ -4,6 +4,8 @@ from pymysql.constants.CR import CR_SERVER_GONE_ERROR,  CR_SERVER_LOST, CR_CONNE
 from twisted.internet import defer
 from twisted.enterprise import adbapi
 import copy
+import pprint
+import logging
 
 class CrowlPipeline:
     """
@@ -16,6 +18,8 @@ class CrowlPipeline:
 
     def __init__(self, crawler):
         self.stats = crawler.stats
+        self.stats_name = 'MySQL'
+        self.logger = logging.getLogger()
         self.settings = crawler.settings
         db_args = {
             'host': self.settings.get('MYSQL_HOST', 'localhost'),
@@ -64,13 +68,13 @@ class CrowlPipeline:
                         CR_CONNECTION_ERROR,
                 ):
                     retries -= 1
-                    logger.info('%s %s attempts to reconnect left', e, retries)
+                    self.logger.info('%s %s attempts to reconnect left', e, retries)
                     self.stats.inc_value('{}/reconnects'.format(self.stats_name))
                     continue
-                logger.exception('%s', pprint.pformat(item))
+                self.logger.exception('%s', pprint.pformat(item))
                 self.stats.inc_value('{}/errors'.format(self.stats_name))
             except Exception:
-                logger.exception('%s', pprint.pformat(item))
+                self.logger.exception('%s', pprint.pformat(item))
                 self.stats.inc_value('{}/errors'.format(self.stats_name))
             else:
                 status = True  # executed without errors
@@ -116,7 +120,7 @@ class CrowlPipeline:
                 try:
                     tx.execute(sql, data)
                 except Exception:
-                    logger.error("SQL: %s", sql)
+                    self.logger.error("SQL: %s", sql)
                     raise
 
             # Replace outlinks dict with count of outlinks before inserting url data
@@ -125,7 +129,7 @@ class CrowlPipeline:
         try:
             tx.execute(sql, data)
         except Exception:
-            logger.error("SQL: %s", sql)
+            self.logger.error("SQL: %s", sql)
             raise
 
-        #self.stats.inc_value('{}/saved'.format(self.stats_name))
+        self.stats.inc_value('{}/saved'.format(self.stats_name))
