@@ -46,7 +46,7 @@ rdflib==4.2.2
 rdflib-jsonld==0.4.0
 reppy==0.4.11
 requests==2.26.0
-Scrapy==1.5.1
+Scrapy==1.8.1
 scrapy-rotating-proxies==0.6.2
 Scrapy-UserAgents==0.0.1
 service-identity==18.1.0
